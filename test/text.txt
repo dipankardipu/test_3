@@ -1,0 +1,138 @@
+<?php 
+function addRollover($givenDate, $addtime) {
+        $starttime = 8*60; //Start time in minutes (decimal hours * 60)
+        $endtime = 16*60; //End time in minutes (decimal hours * 60)
+
+        $givenDate = strtotime($givenDate);
+
+        //Get just the day portion of the given time
+        $givenDay = strtotime('today', $givenDate);
+		
+        //Calculate what the end of today's period is
+        $maxToday = strtotime("+$endtime minutes", $givenDay);
+		
+        //Calculate the start of the next period
+        $nextPeriod = strtotime("tomorrow", $givenDay); //Set it to the next day
+		
+        $nextPeriod = strtotime("+$starttime minutes", $nextPeriod);  //And add the starting time
+        //If it's the weekend, bump it to Monday
+		
+		
+        if(date("D", $nextPeriod) == "Sat") {
+            $nextPeriod = strtotime("+2 days", $nextPeriod);
+        }
+
+        //Add the time period to the new day
+        $newDate = strtotime("+$addtime", $givenDate);
+		
+		
+        //print "$givenDate -> $newDate\n";
+        //print "$maxToday\n";
+        //Get the new hour as a decimal (adding minutes/60)
+        $hourfrac = date('H',$newDate) + date('i',$newDate)/60;
+      //  print "$hourfrac\n<br>";
+
+        //Check if we're outside the range needed
+        if($hourfrac < $starttime || $hourfrac > $endtime) {
+            //We're outside the range, find the remainder and add it on
+            $remainder = $newDate - $maxToday;
+           // print "$remainder\n<br>";
+		   if($remainder > 0 ){
+            $newDate = $nextPeriod + $remainder;
+			} else { $newDate = $newDate;}
+        }
+
+        return $newDate;
+    }
+	
+
+if(isset($_POST['submit'])){
+$link = mysql_connect('localhost', 'root', '');
+if (!$link) {
+    die('Not connected : ' . mysql_error());
+}
+
+// make foo the current db
+$db_selected = mysql_select_db('webauth', $link);
+if (!$db_selected) {
+    die ('Can\'t use foo : ' . mysql_error());
+}
+
+
+$created_end_date = date('Y-m-d H:i:s',addRollover(date('Y-m-d H:00',strtotime("+1 hours")),'5 hours')) . "\n";
+$k = 0;
+for($l=0; $l<4; $l++){
+if($_POST['quantity'][$l]){
+if($k==0) {
+$startdate[$k] = date('Y-m-d H:00',strtotime("+1 hours"));
+$enddate[$k] = date('Y-m-d H:i:s',addRollover($startdate[$k],$_POST['quantity'][$l].' hours'));
+}else {
+$startdate[$k] = date($enddate[$k-1]);
+$enddate[$k] = date('Y-m-d H:i:s',addRollover($startdate[$k],$_POST['quantity'][$l].' hours'));
+}
+$date[$k]['firstname'] = $_POST['firstname'][$l];
+$date[$k]['st_time'] = $startdate[$k];
+$date[$k]['ed_time'] = $enddate[$k];
+$date[$k]['quantity'] = $_POST['quantity'][$l];
+$k++;
+}
+
+}
+
+
+$r = mysql_query("SELECT `data_all` FROM `test_table` WHERE 1");
+while($m=mysql_fetch_array($r)){
+
+$dat  = json_decode($m['data_all']);
+for($l=0; $l<count($date); $l++){
+foreach($dat as $DVdata){
+if($date[$l]['firstname'] == $DVdata->firstname){
+
+$date[$l]['firstname'] = $DVdata->firstname;
+//if($l==0){
+//echo $date[$l]['st_time'].'-'.$date[$l]['ed_time'].'-'.$DVdata->st_time.'-'.$DVdata->ed_time;
+$putdate = dateis($date[$l]['st_time'],$date[$l]['ed_time'],$DVdata->st_time,$DVdata->ed_time);
+$date[$l]['st_time']= date('Y-m-d H:i:s',$putdate);
+$Jstartdate = date('Y-m-d H:i:s',$putdate);
+
+$date[$l]['ed_time']=  date('Y-m-d H:i:s',addRollover($Jstartdate,$date[$l]['quantity'].' hours'));
+
+/*}
+else{
+$date[$l]['st_time'] = $date[$l-1]['ed_time'];
+$Jstartdate =  $date[$l]['st_time'];
+$date[$l]['ed_time']=  date('Y-m-d H:i:s',addRollover($Jstartdate,$date[$l]['quantity'].' hours'));
+}*/
+
+
+
+}
+
+}
+}
+
+}
+print_r($date);die;
+$date = json_encode($date);
+mysql_query("INSERT INTO `test_table` (`id`, `data_all`, `name`) VALUES (NULL, '".$date."', 's')");
+}
+function dateis($referenceSTimestamp, $referenceETimestamp,$fromDate,$toDate) {
+
+	
+	// convert dates to timestamps (strings to integers)
+	$referenceTimestamp = strtotime( $referenceSTimestamp );
+	$referenceETimestamp = strtotime($referenceETimestamp);
+	$fromTimestamp = strtotime( $fromDate );
+	$toTimestamp = strtotime( $toDate );
+
+	// isBetween is Boolean TRUE if reference date is greater or equal fromDate and smaller or equal toDate
+	if ($fromTimestamp >= $referenceSTimestamp && $toTimestamp < $referenceSTimestamp)
+	{
+		return $referenceSTimestamp;
+		
+	}
+	else{ 
+	
+		return $toTimestamp;
+	}
+}
