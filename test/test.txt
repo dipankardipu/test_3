@@ -11,3 +11,15 @@ this is test done
 <hi> wgdwh</hi>
 </body>
 </html>i am hero
+
+I have checked HRA Calculation in tax return which is not correct, I paid house rent about Rs 100,000, But exemption only 72,720, Please reffer Annexure to Form No. 16.
+For that case I need to calim my HRA in ITR return form.
+
+Annexure to Form No. 16
+----------------------------------------
+My total HRA 145,428 (12,119 per month)
+HRA Exemption Calculation which is :72,720
+Left is 145,428 - 72,720 = 72,708
+
+
+cabhushankotkar@gmail.com
