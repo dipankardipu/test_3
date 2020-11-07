@@ -40,6 +40,3 @@ before_install:
         sed -i "s/04-3J31cd08k5B//" wp-tests-config.php
         svn checkout https://plugins.svn.wordpress.org/wordpress-importer/trunk tests/phpunit/data/plugins/wordpress-importer
     fi
-
-# Script, failures in this section will result in build status 'failed'
-script: ./civic.sh
